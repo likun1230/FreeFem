@@ -1,0 +1,11 @@
+include "test.idp"
+
+cout << functionDEFINITION << "norm" << endl;
+real t;
+complex complexnb = 3. + 4i;
+
+t = clock();
+real res = norm(complexnb);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(res == 25);

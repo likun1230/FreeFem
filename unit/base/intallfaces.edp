@@ -1,0 +1,14 @@
+load "msh3"
+include "test.idp"
+
+cout << functionDEFINITION << "intallfaces" << endl;
+real t;
+mesh3 Th = cube(1, 1, 1);
+real edge;
+
+t = clock();
+edge = intallfaces(Th)(1);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+test(edge == 0);

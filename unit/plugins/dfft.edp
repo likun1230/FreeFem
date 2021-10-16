@@ -1,0 +1,102 @@
+include "test.idp"
+load "dfft"
+
+real t;
+bool res;
+int nx = 32, ny = 16;
+mesh Th = square(nx-1, ny-1, [(nx-1)*x/nx, (ny-1)*y/ny]);
+func f = cos(2.*x*2.*pi)*cos(3.*y*2.*pi);
+fespace Vh(Th, P1);
+Vh<complex> u = f, v;
+Vh ur = f, vr;
+
+cout << functionDEFINITION << "dfft" << endl;
+
+t = clock();
+v[] = dfft(u[], ny, -1);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+t = clock();
+u[] = dfft(v[], ny, +1);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+u[] /= nx*ny;
+vr = ur - real(u);
+test(abs(vr) < HWERROR);
+
+t = clock();
+u[] = dfft(v[], ny, 1, 1);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+u[] /= nx*ny;
+vr = ur - real(u);
+test(abs(vr) < HWERROR);
+
+cout << functionDEFINITION << "plandfft" << endl;
+
+t = clock();
+fftwplan p0 = plandfft(v[], u[], ny);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+t = clock();
+fftwplan p1 = plandfft(u[], v[], ny, 1);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+t = clock();
+fftwplan p2 = plandfft(u[], v[], ny, 1, 1);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+cout << functionDEFINITION << "execute" << endl;
+
+// t = clock();
+// res = execute(p0);
+// t = clock() - t;
+// cout << timeELAPSED << t << endl;
+//
+// t = clock();
+// res = execute(p1);
+// t = clock() - t;
+// cout << timeELAPSED << t << endl;
+//
+// t = clock();
+// res = execute(p2);
+// t = clock() - t;
+// cout << timeELAPSED << t << endl;
+
+// TODO segmentation fault
+
+cout << functionDEFINITION << "execute" << endl;
+
+t = clock();
+res = delete(p0);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(res == 0);
+
+t = clock();
+res = delete(p1);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(res == 0);
+
+t = clock();
+res = delete(p2);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(res == 0);
+
+cout << functionDEFINITION << "map" << endl;
+
+res = square(2.*pi);
+t = clock();
+map(u[], ny, res*(x*x+y*y));
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+vr = ur - real(u);
+test(abs(vr) < HWERROR);

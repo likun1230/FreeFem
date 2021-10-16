@@ -1,0 +1,29 @@
+load "msh3"
+include "test.idp"
+
+cout << functionDEFINITION << "labels" << endl;
+
+real t;
+mesh Th = square(10, 10);
+mesh3 Th3 = cube(10, 10, 10);
+
+t = clock();
+int[int] res = labels(Th);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(res.n == 4);
+test(res[0] == 1);
+test(res[1] == 2);
+test(res[2] == 3);
+test(res[3] == 4);
+
+t = clock();
+int[int] res3 = labels(Th3);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(res3[0] == 1);
+test(res3[1] == 2);
+test(res3[2] == 3);
+test(res3[3] == 4);
+test(res3[4] == 5);
+test(res3[5] == 6);

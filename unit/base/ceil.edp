@@ -1,0 +1,13 @@
+include "test.idp"
+
+cout << functionDEFINITION << "ceil" << endl;
+real t;
+
+cout << typeDEFINITION << "real" << endl;
+
+real r = 0.5;
+t = clock();
+int retceil = ceil(r);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(retceil == 1.0);

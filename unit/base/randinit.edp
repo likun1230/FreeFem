@@ -1,0 +1,58 @@
+include "test.idp"
+
+cout << functionDEFINITION << "randinit" << endl;
+real t;
+
+randinit(time());
+t = clock();
+int i31 = randint31();
+t = clock() - t;
+randinit(time());
+int i31bis = randint31();
+cout << timeELAPSED << t << endl;
+test(i31 == i31bis);
+
+randinit(time());
+t = clock();
+int i32 = randint32();
+t = clock() - t;
+randinit(time());
+int i32bis = randint32();
+cout << timeELAPSED << t << endl;
+test(i32 == i32bis);
+
+randinit(time());
+t = clock();
+real r1 = randreal1();
+t = clock() - t;
+randinit(time());
+real r1bis = randreal1();
+cout << timeELAPSED << t << endl;
+test(abs(r1 - r1bis) < HWERROR);
+
+randinit(time());
+t = clock();
+real r2 = randreal2();
+t = clock() - t;
+randinit(time());
+real r2bis = randreal2();
+cout << timeELAPSED << t << endl;
+test(abs(r2 - r2bis) < HWERROR);
+
+randinit(time());
+t = clock();
+real r3 = randreal3();
+t = clock() - t;
+randinit(time());
+real r3bis = randreal3();
+cout << timeELAPSED << t << endl;
+test(abs(r3 - r3bis) < HWERROR);
+
+randinit(time());
+t = clock();
+real r53 = randres53();
+t = clock() - t;
+randinit(time());
+real r53bis = randres53();
+cout << timeELAPSED << t << endl;
+test(abs(r53 - r53bis) < HWERROR);

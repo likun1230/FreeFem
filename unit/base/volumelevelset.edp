@@ -1,0 +1,20 @@
+load "msh3"
+include "test.idp"
+
+cout << functionDEFINITION << "volumelevelset" << endl;
+
+real t;
+real r = 0.;
+border c1(t=0, 2.*pi){x=cos(t); y=sin(t);}
+int i = 100;
+mesh3 Th = cube(5, 5, 5, [-1.+2.*x, -1.+2.*y, -1.+2.*z]);
+
+fespace Uh(Th, P1);
+Uh u = x;
+
+t = clock();
+real res = volumelevelset(Th, u[], r);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+test(abs(res - 4.) < HWERROR);

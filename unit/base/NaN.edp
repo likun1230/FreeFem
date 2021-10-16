@@ -1,0 +1,20 @@
+include "test.idp"
+
+cout << functionDEFINITION << "NaN" << endl;
+real t;
+
+cout << typeDEFINITION << "string" << endl;
+
+string str = "FreeFEM";
+
+t = clock();
+real res = NaN("");
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(res != res);
+
+t = clock();
+real res2 = NaN(str);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(res2 != res2);

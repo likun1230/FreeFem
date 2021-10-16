@@ -1,0 +1,295 @@
+#!/usr/bin/perl
+
+############################################################################
+# This file is part of FreeFEM.                                            #
+#                                                                          #
+# FreeFEM is free software: you can redistribute it and/or modify          #
+# it under the terms of the GNU Lesser General Public License as           #
+# published by the Free Software Foundation, either version 3 of           #
+# the License, or (at your option) any later version.                      #
+#                                                                          #
+# FreeFEM is distributed in the hope that it will be useful,               #
+# but WITHOUT ANY WARRANTY; without even the implied warranty of           #
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            #
+# GNU Lesser General Public License for more details.                      #
+#                                                                          #
+# You should have received a copy of the GNU Lesser General Public License #
+# along with FreeFEM. If not, see <http://www.gnu.org/licenses/>.          #
+############################################################################
+# SUMMARY : Download third-party packages independently of FF configuration
+# LICENSE : LGPLv3
+# ORG     : LJLL Universite Pierre et Marie Curie, Paris, FRANCE
+# AUTHORS : Antoine Le Hyaric
+# E-MAIL  : http://www.ljll.math.upmc.fr/lehyaric
+
+use strict;
+use Getopt::Std;
+use Digest::MD5 qw(md5_hex); # [[http://perldoc.perl.org/Digest/MD5.html]]
+
+# This download script needs to be able to work on platforms that do not have threads (eg Mingw).
+
+my $can_use_threads=eval 'use threads;use threads::shared;1';
+
+my %opts;
+getopts('afho:',\%opts);
+
+if($opts{h}){
+	print <<EOF;
+getall [options]: Download third-party packages independently of the FreeFEM configuration procedure
+
+Available options:
+
+-a = accept all licences without further user interaction
+-f = force downloads even if packages are already present locally
+-h = this help
+-o name,name,... = only download packages with the given names
+
+EOF
+	exit 0;
+}
+
+# Accumulate errors and print them all at the end of the script
+
+my $errors='';
+if($can_use_threads){share(\$errors)}
+
+# Accumulate errors and print them all at the end of the script
+
+my $errors='';
+if($can_use_threads){share(\$errors)}
+
+# list required packages
+my $only=0;
+my %packs;
+if(defined $opts{o}){
+	$only=1;
+	foreach(split(/,/,$opts{o})){$packs{$_}=1}
+}
+
+# can be run from the parent directory
+
+if(-x "3rdparty/getall"){chdir "3rdparty"}
+
+# can be run from any of the child directories
+
+if(-x "../getall"){chdir ".."}
+
+system "mkdir -p pkg";
+my @downloads;
+
+download('ARPACK','http://www.caam.rice.edu/software/ARPACK/SRC/arpack96.tar.gz',
+ 	'http://www.caam.rice.edu/software/ARPACK',
+	'arpack96.tar.gz',
+	'fffaa970198b285676f4156cebc8626e');
+download('ARPACK','http://www.caam.rice.edu/software/ARPACK/SRC/patch.tar.gz',
+	'http://www.caam.rice.edu/software/ARPACK',
+	'patch.tar.gz',
+	'14830d758f195f272b8594a493501fa2');
+download('BLAS','http://www.netlib.org/blas/blas-3.7.1.tgz',
+	'http://www.netlib.org/blas',
+	'blas-3.7.1.tgz',
+	'cd132aea6f7055a49aa48ca0a61e7cd5');
+download('BLAS','http://www.netlib.org/blas/blast-forum/cblas.tgz',
+	'http://www.netlib.org/blas/blast-forum',
+	'cblas.tgz',
+	'1e8830f622d2112239a4a8a83b84209a');
+download('OpenBLAS','http://github.com/xianyi/OpenBLAS/archive/v0.3.6.tar.gz',
+	'http://www.openblas.net/',
+	'OpenBLAS.tar.gz',
+	'8a110a25b819a4b94e8a9580702b6495',
+	'BAD_CERT');
+
+download('FFTW','http://www.fftw.org/fftw-3.3.8.tar.gz',
+	'http://www.fftw.org',
+	'fftw-3.3.8.tar.gz','8aac833c943d8e90d51b697b27d4384d');
+# 3.3.2	'6977ee770ed68c85698c7168ffa6e178');
+download('freeYams','https://www.ljll.math.upmc.fr/frey/ftp/archives/freeyams.2012.02.05.tgz',
+	'https://www.ljll.math.upmc.fr/frey/software.html',
+	'freeyams.2012.02.05.tgz',
+	'b7c82a256a3e59beeb2b578de93a4e0b');
+download('Gmm++','http://download.gna.org/getfem/stable/gmm-4.2.tar.gz',
+	'http://download.gna.org/getfem/html/homepage/download.html',
+	'gmm-4.2.tar.gz',
+	'35fe900f7459c49f4b4337dc691c8cdf');
+download('Ipopt','http://www.coin-or.org/download/source/Ipopt/Ipopt-3.12.4.tgz',
+	'https://projects.coin-or.org/Ipopt',
+	'Ipopt-3.12.4.tgz',
+	'12a8ecaff8dd90025ddea6c65b49cb03');
+download('METIS','http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/metis-5.1.0.tar.gz',
+	'http://www.netlib.org/linalg/',
+	'metis-5.1.0.tar.gz',
+	'5465e67079419a69e0116de24fce58fe');
+download('ParMETIS','http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.3.tar.gz',
+	'http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/',
+	'ParMetis-4.0.3.tar.gz',
+	'f69c479586bf6bb7aff6a9bc0c739628');
+download('MMG3D','http://www.math.u-bordeaux1.fr/~dobrzyns/logiciels/download/mmg3d4.0.tgz',
+	'http://www.math.u-bordeaux1.fr/~dobrzyns/logiciels/mmg3d.php',
+	'mmg3d4.0.tgz',
+	'bfc2b0373bc208e0512415d1aa2e76a1');
+download('mshmet','https://www.ljll.math.upmc.fr/frey/ftp/archives/mshmet.2012.04.25.tgz',
+	'https://www.ljll.math.upmc.fr/frey/software.html',
+	'mshmet.2012.04.25.tgz',
+	'427f397e0602efc56aa897d38a8e9bfa');
+download('MUMPS','http://mumps.enseeiht.fr/MUMPS_5.0.2.tar.gz',
+	'http://mumps.enseeiht.fr/',
+	'MUMPS_5.0.2.tar.gz',
+	'591bcb2c205dcb0283872608cdf04927');
+download('NLopt','http://ab-initio.mit.edu/nlopt/nlopt-2.2.4.tar.gz',
+	'http://ab-initio.mit.edu/wiki/index.php/NLopt',
+	'nlopt-2.2.4.tar.gz',
+	'9c60c6380a10c6d2a06895f0e8756d4f');
+download('ScaLAPACK','http://www.netlib.org/scalapack/scalapack-2.1.0.tgz',
+	'http://www.netlib.org/scalapack/',
+	'scalapack-2.1.0.tgz',
+	'3b239ef80353c67354a0a62d54946fa8');
+download('Scotch','https://gitlab.inria.fr/scotch/scotch/-/archive/v6.1.0/scotch-v6.1.0.tar.gz',
+	'https://gitlab.inria.fr/scotch/',
+	'scotch-v6.1.0.tar.gz',
+	'7bfad4aaa851af6815b2160da7ebe36a'); # web certificate from gforge.inria.fr is rejected
+download('SuiteSparse','http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.4.4.tar.gz',
+	'http://faculty.cse.tamu.edu/davis/SuiteSparse/',
+	'SuiteSparse-4.4.4.tar.gz',
+	'e0af74476935c9ff6d971df8bb6b82fc') ;
+#download('SuperLU','https://github.com/xiaoyeli/superlu/archive/4f2da83a24c52641c1f7ab06f57c00b8954cf215.zip',
+#	'https://github.com/xiaoyeli/superlu',
+#	'superlu.zip',
+#	'596927f39d28a7d6eb396764f46455b2');
+download('SuperLU','https://github.com/xiaoyeli/superlu/archive/v5.2.2.zip',
+		'https://github.com/xiaoyeli/superlu',
+		'superlu-5.2.2.zip',
+		'6e24842b0aa07f457d929b162e09ca6c');
+download('TetGen','http://www.tetgen.org/1.5/src/tetgen1.5.1-beta1.tar.gz',
+	'http://www.tetgen.org/1.5/src/',
+	'tetgen1.5.1-beta1.tar.gz',
+	'3d55c197bcbfc611b7ced6f343643756');
+download('mmg','https://github.com/MmgTools/mmg/archive/a90b665e909a3921490d3e281f7afa2d243a5ba0.zip',
+        'https://github.com/MmgTools',
+        'mmg.zip',
+        'd824d08dac0544caff20a915194da0fe');
+download('parmmg','https://github.com/MmgTools/ParMmg/archive/f78f4e3e1019137787588aab7a8052fbc60dada2.zip',
+        'https://github.com/MmgTools',
+        'parmmg.zip',
+        '9a76fef6be1ab66af3a813409a0388c9');
+download('PETSc','https://www.mcs.anl.gov/petsc/mirror/release-snapshots/petsc-3.15.0.tar.gz',
+	'https://www.mcs.anl.gov/petsc/mirror/release-snapshots/',
+	'petsc-3.15.0.tar.gz',
+	'32cdb2a2aed1be52059f6221a41d2b18');
+
+download('htool','https://github.com/htool-ddm/htool/archive/e008e87bded5626d73fa7655487aee48268e2149.zip',
+		'https://github.com/htool-ddm/',
+		'htool.zip',
+		'7ee614df188cf501c03c5f27d1569b1c');
+
+	
+download('hpddm','https://codeload.github.com/hpddm/hpddm/zip/e58205623814f59bf2aec2e2bab8eafcfbd22466',
+	'https://codeload.github.com/hpddm',
+	'hpddm.zip',
+	'b7a4f9be6de2df302485c4689a6c8078');
+
+download('bemtool','https://github.com/PierreMarchand20/BemTool/archive/d327ef63c5abe88b13197c433a019e0db10eb426.zip',
+	'https://github.com/PierreMarchand20/BemTool',
+	'bemtool.zip',
+	'70fcbea1f1bd2e8c8d9c44f59626f934');
+
+download('Boost','https://www.ljll.math.upmc.fr/~tournier/boost_for_bemtool.tar.gz',
+	'https://www.boost.org',
+	'boost_for_bemtool.tar.gz',
+	'bb0e3ee1ad06174c80a69bc0756034e7');
+
+
+download('libpthread-google','http://pkgs.freefem.org/libpthread-google.tar.gz',
+		'http://pkgs.freefem.org/',
+		'libpthread-google.tar.gz',
+		'945c006d898983d1a710aabf52a32d9c');
+
+
+# run all downloads concurrently
+
+if($can_use_threads){
+	my @threads;
+	foreach(@downloads){push @threads,threads->create(\&downloadone,$_)}
+	foreach(@threads){$_->join()}
+}
+else{
+	foreach(@downloads){downloadone($_)}
+}
+
+if($errors ne ''){
+	print "\n$errors";
+	exit 1;
+}
+
+sub download{
+	my($title,$url,$lic,$pkg,$md5,$opts)=@_;
+
+	# skip packages that have not been requested explicitely
+	return if($only && !defined $packs{$title});
+
+	# skip packages that are already present
+	if(-f "pkg/$pkg" && !$opts{f}){
+		my $md5check=md5_hex(`cat pkg/$pkg`);
+		if( ( $md5 eq "none") || ($md5check eq $md5)){
+			print "$title $pkg done\n";
+			return;
+		}
+		else {
+			print "$title $pkg  md5 change => reget \n";
+		}
+	}
+
+	# we do not store the answers to these questions. To repeat the same downloads without manual input, options "-a" and
+	# "-o names" are provided.
+
+	if(!$opts{a}){
+		print "$title: please check the licence at $lic. Do you want to download $url? (yN)\n";
+		my $ans=uc <STDIN>;
+		chomp $ans;
+		return if $ans ne 'Y';
+	}
+
+	# uses [[file:../bin/build/download]]
+	push @downloads,"$url,$pkg,$md5,$opts";
+}
+
+sub downloadone{
+	##  correct rescue server for done load
+	my($url,$pkg,$md5,$opts)=split(/,/,$_[0]);# warning just $pkg without pkg/$pkg
+	my $cmd="../bin/build/download $url pkg/$pkg $opts";
+	print "$cmd\n";
+	system $cmd;
+	if($?){
+		print "Download failed from $url of $pkg\n";
+		my $url="http://pkgs.freefem.org/$pkg";
+		my $cmd="../bin/build/download $url pkg/$pkg $opts";
+		print "Try other site: $url\n";
+		system $cmd;
+		if($?){
+			print "Download 2 times failed from $url of $pkg\n";
+			my $url="http://104.46.50.187/pkg/$pkg";
+			my $cmd="../bin/build/download $url pkg/$pkg $opts";
+			print "Try (2 times)  other site: $url\n";
+			system $cmd;
+			if ($?){
+				$errors.="ERROR: $cmd FAILED\n"
+			}
+		}
+		
+	}
+	# check if resulting package contents are valid
+	my $md5check=md5_hex(`cat pkg/$pkg`);
+	if( ( $md5 ne "none") && ($md5check ne $md5)){
+		print "Download failed (MD5 check) from $url of $pkg\n";
+		my $url="http://pkgs.freefem.org/$pkg";
+		my $cmd="../bin/build/download $url pkg/$pkg $opts";
+		print "Try other site: $url\n";
+		system $cmd;
+		if($?){
+			$errors.="ERROR 2: $cmd FAILED\n"
+		}
+		else { $md5check=md5_hex(`cat pkg/$pkg`);}
+		if(  ($md5check ne $md5))
+		{
+		  $errors.="ERROR2: INVALID MD5 for $pkg  $md5check\n"}
+	    }
+}

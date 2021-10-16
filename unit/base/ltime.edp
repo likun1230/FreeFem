@@ -1,0 +1,16 @@
+include "test.idp"
+
+cout << functionDEFINITION << "ltime" << endl;
+real t;
+int time1;
+int time2;
+
+cout << typeDEFINITION << "int" << endl;
+
+t = clock();
+time1 = ltime();
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+system("sleep 1");
+time2 = ltime();
+test(time2 > time1);

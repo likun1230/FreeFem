@@ -1,0 +1,13 @@
+include "test.idp"
+
+cout << functionDEFINITION << "getline" << endl;
+real t;
+ifstream file("assets/getline.txt");
+string read;
+
+t = clock();
+getline(file, read);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+cout << read << endl;
+test(read == "I have read this line");

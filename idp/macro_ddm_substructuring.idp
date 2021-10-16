@@ -1,0 +1,109 @@
+include "macro_ddm.idp"
+
+macro partitionSubstructuring(meshName, interfaceNb, globalName, PhGlobal, part, s, ndofSkeleton, BC, comm, fakeInterface, labDirichlet)
+        meshName = trunc(globalName, abs(part - mpiRank(comm)) < 0.1, label = fakeInterface);
+        fespace VhGlobal(globalName, P1);
+        PhGlobal supp = abs(part - mpiRank(comm)) < 0.1;
+        VhGlobal suppSmooth;
+        AddLayers(globalName, supp[], 2, suppSmooth[]);
+        ndofSkeleton.resize(1);
+        ndofSkeleton[0].resize(0);
+        {
+            int[int] n2o;
+            meshN neighbors = trunc(globalName, suppSmooth > 0.001, new2old = n2o);
+            int[int] partOverlap(n2o.n);
+            for[i, v : n2o] partOverlap[i] = part[][v];
+            Unique(partOverlap, ndofSkeleton[0], remove = mpiRank(comm));
+        }
+        VhGlobal[int] partitionIntersection(ndofSkeleton[0].n);
+        if(s > 1) {
+            globalName = trunc(globalName, suppSmooth > 0.001, split = s, label = fakeInterface);
+            supp = abs(part - mpiRank(comm)) < 0.1;
+            suppSmooth = 0;
+            AddLayers(globalName, supp[], 2, suppSmooth[]);
+            meshName = trunc(meshName, 1, split = s);
+        }
+        globalName = trunc(globalName, suppSmooth > 0.501, label = fakeInterface);
+        real eps = intN(globalName)(1.0);
+        real[int] epsTab(ndofSkeleton[0].n);
+        mpiRequest[int] rq(2 * ndofSkeleton[0].n);
+        for(int j = 0; j < ndofSkeleton[0].n; ++j)
+            Irecv(processor(ndofSkeleton[0][j], comm, rq[j]), epsTab[j]);
+        for(int j = 0; j < ndofSkeleton[0].n; ++j)
+            Isend(processor(ndofSkeleton[0][j], comm, rq[ndofSkeleton[0].n + j]), eps);
+        VhGlobal phi = 0;
+        part = part;
+        int numberIntersection = 0;
+        for(int k = 0; k < 2 * ndofSkeleton[0].n; ++k)
+            mpiWaitAny(rq);
+        for(int i = 0; i < ndofSkeleton[0].n; ++i) {
+            PhGlobal suppPartition = abs(ndofSkeleton[0][i] - part) < 0.1;
+            AddLayers(globalName, suppPartition[], 1, phi[]);
+            if(intN(globalName)(phi) / min(eps, epsTab[i]) > 1.0e-10) {
+                partitionIntersection[numberIntersection] = phi;
+                ndofSkeleton[0][numberIntersection++] = ndofSkeleton[0][i];
+            }
+        }
+        if(numberIntersection != ndofSkeleton[0].n)
+            ndofSkeleton[0].resize(numberIntersection);
+        Wh def(interface);
+        varf vPbInterface(def(u), def(v)) = on(fakeInterface, BC(u, 1.0)) + on(labDirichlet, BC(u, 0.0));
+        interface[] = vPbInterface(0, Wh, tgv = 1);
+        matrix[int] R(ndofSkeleton[0].n);
+
+        for(int i = 0; i < ndofSkeleton[0].n; ++i) {
+            meshN meshIntersection = trunc(globalName, (part == mpiRank(comm) || part == ndofSkeleton[0][i]) && partitionIntersection[i] > 1e-6, label = fakeInterface);
+            fespace WhIntersection(meshIntersection, Pk);
+            R[i] = interpolate(WhIntersection, Wh, inside = 1);
+        }
+        buildSkeleton(interface[], R, ndofSkeleton, interface = interfaceNb, redundancy = getARGV("-redundancy", 1), communicator = comm);// EOM
+
+macro buildSubstructuringWithPartitioning(Th, interfaceNb, userPartitioning, fakeInterface, labDirichlet, labNeumann, s, intersection, P, BC, comm, excluded)
+{
+    real timing = mpiWtime();
+    fespace WhLocal(Th, Pk);
+    if(mpiSize(comm) > 1 && !excluded) {
+        meshN ThGlobal = Th;
+        fespace PhGlobal(ThGlobal, P0);
+        PhGlobal partGlobal;
+        if(userPartitioning.n != PhGlobal.ndof) {
+            if(mpiRank(comm) == 0) {
+                if(verbosity > 0)
+                    cout.scientific << " --- global mesh of " << ThGlobal.nt << " elements (prior to refinement) partitioned with " << Stringification(partitioner);
+                timing = mpiWtime();
+                partitionerSeq(partGlobal[], ThGlobal, mpiSize(comm));
+            }
+            partitionerPar(partGlobal[], ThGlobal, comm, mpiSize(comm));
+            if(mpiRank(comm) == 0 && verbosity > 0)
+                cout.scientific << " (in " << mpiWtime() - timing << ")" << endl;
+            timing = mpiWtime();
+        }
+        else {
+            partGlobal[] = userPartitioning;
+            broadcast(processor(0, comm), partGlobal[]);
+        }
+        partitionSubstructuring(Th, interfaceNb, ThGlobal, PhGlobal, partGlobal, s, intersection, BC, comm, fakeInterface, labDirichlet)
+    }
+    else if(mpiSize(comm) == 1) {
+        if(s > 1)
+            Th = trunc(Th, 1, split = s);
+        Wh def(interface);
+        varf vPbInterface(def(u), def(v)) = on(labNeumann, BC(u, 1.0)) + on(labDirichlet, BC(u, 0.0));
+        interface[] = vPbInterface(0, Wh, tgv = 1);
+        interfaceNb.resize(Wh.ndof);
+        int j = 0;
+        for(int i = 0; i < Wh.ndof; ++i) {
+            if(interface[][i] > 0.9)
+                interfaceNb[j++] = i;
+        }
+        interfaceNb.resize(j);
+    }
+    mpiBarrier(mpiCommWorld);
+    if(verbosity > 0 && mpirank == 0) cout.scientific << " --- partition of unity built (in " << mpiWtime() - timing << ")" << endl;
+}// EOM
+
+macro buildSubstructuring(Th, interfaceNb, fakeInterface, labDirichlet, labNeumann, s, intersection, P, BC, comm, excluded)
+{
+    real[int] emptyArray(0);
+    buildSubstructuringWithPartitioning(Th, interfaceNb, emptyArray, fakeInterface, labDirichlet, labNeumann, s, intersection, P, BC, comm, excluded)
+}// EOM

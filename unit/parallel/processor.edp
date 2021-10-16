@@ -1,0 +1,37 @@
+//NBPROC 4
+include "test.idp"
+
+if (!mpirank) cout << functionDEFINITION << "processor" << endl;
+
+real t;
+
+cout << "MPI rank = " << mpirank << endl;
+
+if (mpisize > 4) {
+  int[int] procs=[1, 4];
+  mpiGroup grp(procs);
+  mpiComm comm(grp);
+
+  mpiComm  n0comm(mpiCommWorld,mpirank%3,0);// MPI_Comm_split
+  mpiComm  n1comm(mpiCommWorld,mpirank%3,1);// MPI_Comm_split
+  mpiComm  n2comm(mpiCommWorld,mpirank%3,2);// MPI_Comm_split
+  if (!n1comm)  // not in n1comm
+    {
+      mpiComm  nicomm(processor(n1comm,1),processor(n2comm,2),1000);
+      mpiComm  n12comm(nicomm,true);  // MPI_Intercomm_merge cosntructor
+    }
+}
+
+if (mpirank == 0) {
+  t = mpiWtime();
+  processor(1) << 123456; //  unblock send
+  t = mpiWtime() - t;
+  cout << timeELAPSED << t << endl;
+} else if (mpirank == 1) {
+  int k;
+  t = mpiWtime();
+  processor(0) >> k; // block recv
+  t = mpiWtime() - t;
+  cout << timeELAPSED << t << endl;
+  test(k == 123456);
+}

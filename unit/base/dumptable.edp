@@ -1,0 +1,9 @@
+include "test.idp"
+
+cout << functionDEFINITION << "dumptable" << endl;
+real t;
+
+t = clock();
+dumptable(cout);
+t = clock() - t;
+cout << timeELAPSED << t << endl;

@@ -1,0 +1,16 @@
+include "test.idp"
+
+cout << functionDEFINITION << "j1" << endl;
+real t;
+
+cout << typeDEFINITION << "real" << endl;
+
+real r1 = 0;
+real r2 = 1.0;
+real r3 = -4.2;
+
+t = clock();
+real resr1 = j1(r1);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(resr1 == 0.);

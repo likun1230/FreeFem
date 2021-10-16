@@ -1,0 +1,21 @@
+include "test.idp"
+
+cout << functionDEFINITION << "fespace" << endl;
+real t;
+
+mesh Th = square(100, 100, [2*x - 1,2*y - 1]);
+mesh Th2 = square(2, 2, [2*x - 1, 2*y - 1]);
+t = clock();
+fespace Wh(Th2, P0edge);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+Wh w = x;
+Wh<complex> wc = 1 + 1i;
+
+w[] = 0;
+w[][6] = 1;
+
+fespace Vh(Th, P1);
+Vh u = w;
+
+test(Vh.ndof == Th.nv);

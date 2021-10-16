@@ -1,0 +1,37 @@
+include "test.idp"
+
+cout << functionDEFINITION << "trace" << endl;
+
+real t;
+
+cout << typeDEFINITION << "matrix" << endl;
+
+t = clock();
+real Tr = trace([[1, 2, 3],
+                 [4 ,5, 6],
+                 [7, 8, 9]]);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(Tr == 15);
+
+t = clock();
+Tr = trace([[1, 2, 3],
+            [4 , -5, 6],
+            [7, 8, 9]]);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(Tr == 5);
+
+t = clock();
+Tr = trace([[-1, 2],
+            [-3, 4]]);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(Tr == 3);
+
+t = clock();
+Tr = trace([[-1.5, 2.],
+            [-3., 1.5]]);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(Tr == 0);

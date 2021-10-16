@@ -1,0 +1,39 @@
+include "test.idp"
+load "msh3"
+
+cout << functionDEFINITION << "func" << endl;
+real t;
+
+t = clock();
+func fmin = 1;
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+test(fmin == 1);
+
+t = clock();
+func fmax = 10;
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+test(fmax == 10);
+
+t = clock();
+func fxy = x + y;
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+x = 1.;
+y = 2.;
+test(fxy == 3.);
+
+t = clock();
+func real fxyt (real t) {
+  return x + y + t;
+}
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+x = 10.;
+y = 20.;
+test(fxyt(30.) == 60.);

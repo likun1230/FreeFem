@@ -1,0 +1,28 @@
+include "test.idp"
+
+cout << functionDEFINITION << "system" << endl;
+real t;
+
+cout << typeDEFINITION << "string" << endl;
+
+string commandls = "ls";
+string commandfail = "toto";
+string commandempty = "";
+
+t = clock();
+int retvalue1 = system(commandls);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(retvalue1 == 0);
+
+t = clock();
+int retvalue2 = system(commandfail);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(retvalue2 != 0);
+
+t = clock();
+int retvalue3 = system(commandempty);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(retvalue3 == 0);

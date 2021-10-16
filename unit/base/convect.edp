@@ -1,0 +1,27 @@
+load "msh3"
+include "test.idp"
+
+cout << functionDEFINITION << "convect.edp" << endl;
+real t;
+
+border C(t=0., 2.*pi) {x=cos(t); y=sin(t);};
+mesh Th = buildmesh(C(100));
+real dt = 0.17;
+fespace Uh(Th, P1);
+Uh cold, csave, c = exp(-10*((x-0.3)^2 +(y-0.3)^2));
+Uh u1 = y, u2 = -x;
+csave = c;
+
+real time = 0;
+for (int m = 0; m < 2.*pi/dt; m++) {
+  time += dt;
+  cold = c;
+  t = clock();
+  c = convect([u1, u2], -dt, cold);
+  t = clock() - t;
+  cout << timeELAPSED << t << endl;
+  Th = adaptmesh(Th, c);
+  c = c;
+}
+real cerror = csave[].max - c[].max;
+test(abs(cerror) < 0.15);

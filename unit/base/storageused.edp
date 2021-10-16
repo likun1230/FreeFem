@@ -1,0 +1,12 @@
+include "test.idp"
+
+cout << functionDEFINITION << "storageused" << endl;
+real t;
+
+cout << typeDEFINITION << "int" << endl;
+
+t = clock();
+int total = storageused();
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+test(total);

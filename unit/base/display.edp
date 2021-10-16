@@ -1,0 +1,53 @@
+include "test.idp"
+
+cout << functionDEFINITION << "display" << endl;
+real t;
+
+cout << typeDEFINITION << "full matrix" << endl;
+
+matrix A = [[1, 2, 3], [4, 5, 6]];
+t = clock();
+display(A);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+
+cout << typeDEFINITION << "sparse matrix" << endl;
+
+func Pk = P2;
+int nn = 10;
+func f = 1.;
+func ue = 1.;
+
+// Macro
+macro grad(A) [dx(A), dy(A)] //
+
+// Mesh
+border b1(t=0, 1){x=t; y=0; label=1;}
+border b2(t=0, 1){x=1; y=t; label=2;}
+border b3(t=0, 1){x=1-t; y=1; label=3;}
+border b4(t=0, 1){x=0; y=1-t; label=4;}
+mesh Th = buildmesh(b1(nn) + b2(nn) + b3(nn) + b4(nn));
+int[int] Wall = [1, 2, 3, 4];
+
+fespace Uh(Th, Pk);
+Uh u, uh;
+
+cout << typeDEFINITION << "varf" << endl;
+t = clock();
+varf vPoisson (u, uh)
+	= int2d(Th)(
+		  grad(u)' * grad(uh)
+	)
+	+ int2d(Th)(
+		  f * uh
+	)
+	+ on(Wall, u=ue)
+	;
+t = clock() - t;
+cout << timeELAPSED << t << endl;
+matrix<real> Poisson = vPoisson(Uh, Uh, solver=sparsesolver);
+
+t = clock();
+display(Poisson);
+t = clock() - t;
+cout << timeELAPSED << t << endl;
